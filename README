@@ -1,0 +1,30 @@
+WkHtmlToPdfDflat is a work in progress .NET class library written in D♭
+*errm* C# with .NET bindings for the wkhtmltopdf library. Currenty the
+project is a Visual Studio 2010 project (I know, ugh), but eventually I
+might get around to turning it into a command-line interface-friendly,
+Mono-based project... Assuming Mono supports P/Invoke and what not...
+
+The library doesn't seem to work properly right now. I haven't figured out
+what is wrong. If you try to retrieve strings (e.g., phase description or
+progress string) then you will get access violation exceptions. Otherwise,
+the PDF seems to come out blank. In previous stages of this library you'd
+get access violation exceptions from within the native convert function...
+I don't know what is wrong, but clearly I'm not invoking the native
+library properly somewhere.
+
+Any help is appreciated. :)
+
+== Windows ==
+
+To use the library you'll need a copy of the wkhtmltox0.dll somewhere in
+your PATH environment variable (or current working directory) so that
+DllImportAttribute and P/Invoke can find it.  You can download precompiled
+binaries from the Google Code project site:
+<http://code.google.com/p/wkhtmltopdf/>. Or if you're brave enough then
+you can attempt to build it yourself (I think it involves Qt, and in
+Windows that sounds like a nightmare to me).
+
+== Other OS ==
+
+I'm not going to speculate on what you need for Linux yet.
+
