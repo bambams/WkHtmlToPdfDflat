@@ -28,3 +28,113 @@ Windows that sounds like a nightmare to me).
 
 I'm not going to speculate on what you need for Linux yet.
 
+== API ==
+
+This describes the way the .NET API was originally meant to be used. I'm
+not sure whether or not the semaphore is necessary (since the wkhtmltopdf
+documentation doesn't seem to say whether or not the convert call blocks
+until the conversion is complete (and all converter events have been
+processed).
+
+=== High-level Worker Example ===
+
+using System;
+using System.IO;
+using System.Threading;
+using WkHtmlToPdfDflat;
+
+namespace Application
+{
+    class Program
+    {
+        static int Main(string[] args)
+        {
+            return new Program().Run(args);
+        }
+
+        protected int progress_ = 0;
+        protected int status_ = 0;
+
+        public int Run(string[] args)
+        {
+            using(var sem = new Semaphore(0, 1))
+            {
+                using(var worker = new Worker())
+                {
+                    worker.Error += (sender, e) => {
+                        this.status_++;
+
+                        Console.Error.WriteLine(e.String);
+
+                        if(sem != null)
+                            sem.Release();
+                    };
+
+                    worker.Finished += (sender, e) => {
+                        using(var fs = new FileStream(
+                                "output.pdf",
+                                FileMode.Create))
+                        {
+                            var output = e.Converter.GetOutput();
+
+                            fs.Write(output, 0, output.Length);
+                        }
+
+                        Console.WriteLine("Finished!");
+
+                        if(sem != null)
+                            sem.Release();
+                    };
+
+                    worker.PhaseChanged += (sender, e) => {
+                        this.PrintProgress(e.Converter);
+                    };
+
+                    worker.ProgressChanged += (sender, e) => {
+                        this.PrintProgress(e.Converter, e.Value);
+                    };
+
+                    worker.Warning += (sender, e) => {
+                        this.status_++;
+
+                        Console.Error.WriteLine(e.String);
+                    };
+
+                    var html = File.ReadAllText("example.html");
+
+                    worker.Convert(html, null);
+
+                    if(sem.WaitOne(30000))
+                    {
+                        throw new Exception(
+                                "WkHtmlToPdfDflat never woke me up!");
+                    }
+                }
+            }
+
+            return this.status_;
+        }
+
+        protected void PrintProgress(
+                Converter converter,
+                int? progress = null)
+        {
+            if(progress != null)
+                this.progress_ = (int)progress;
+
+            Console.WriteLine(
+                    "{0} - {1} - {2}%",
+                    converter.CurrentPhaseDescription,
+                    converter.ProgressString,
+                    this.progress_);
+        }
+    }
+}
+
+=== Lower-level Converter Example ===
+
+The Converter isn't initially meant to be used directly. If you choose to
+do it then you will need to make some native calls yourself (or add some
+more abstractions to the library). This might change if I can ever
+actually get the library working at all. ;P
+
