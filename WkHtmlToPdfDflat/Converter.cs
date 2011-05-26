@@ -41,18 +41,8 @@ namespace WkHtmlToPdfDflat
 
         public void Convert()
         {
-            try
-            {
-                if(!NativeMethods.wkhtmltopdf_convert(this.ConverterPtr))
-                    throw new Exception("Failed to convert HTML to PDF.");
-            }
-            catch(AccessViolationException ex)
-            {
-                Console.Error.WriteLine("Unhandled exception caught:");
-                Console.Error.WriteLine(ex.Message);
-                Console.Error.WriteLine("Stack trace:");
-                Console.Error.WriteLine(ex.StackTrace);
-            }
+            if(!NativeMethods.wkhtmltopdf_convert(this.ConverterPtr))
+                throw new Exception("Failed to convert HTML to PDF.");
         }
 
         public IntPtr ConverterPtr { get; protected set; }
